@@ -19,6 +19,14 @@ public partial class App : Application
     public Scheduler Scheduler { get; private set; } = null!;
     public Settings Settings => _settings;
 
+    public App()
+    {
+        AppDomain.CurrentDomain.UnhandledException += (_, a) => Log.Write($"crash: {a.ExceptionObject}");
+        DispatcherUnhandledException += (_, a) => Log.Write($"crash (UI thread): {a.Exception}");
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, a) => Log.Write($"unobserved task error: {a.Exception}");
+        SessionEnding += (_, a) => Log.Write($"session ending ({a.ReasonSessionEnding})");
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -31,6 +39,10 @@ public partial class App : Application
             return;
         }
 
+        Log.Trim();
+        Log.Write($"start  args=[{string.Join(' ', e.Args)}]  cwd={Environment.CurrentDirectory}  " +
+                  $"since boot={TimeSpan.FromMilliseconds(Environment.TickCount64):h\\:mm\\:ss}");
+
         // Mascot motion doesn't need 60 fps; halves the cost of the idle animation.
         Timeline.DesiredFrameRateProperty.OverrideMetadata(typeof(Timeline),
             new FrameworkPropertyMetadata { DefaultValue = 30 });
@@ -40,6 +52,7 @@ public partial class App : Application
         _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
         if (!first)
         {
+            Log.Write("already running: asked that instance to open Settings, exiting");
             _showEvent.Set();
             Shutdown();
             return;
@@ -57,6 +70,7 @@ public partial class App : Application
         {
             Autostart.RefreshPath();
         }
+        StartMenu.Ensure();
 
         Scheduler = new Scheduler(_settings);
         Scheduler.Due += ShowReminder;
@@ -117,6 +131,7 @@ public partial class App : Application
 
     public void Quit()
     {
+        Log.Write("quit from the tray menu");
         _reminder?.Dismiss();
         Scheduler?.Dispose();
         _tray?.Dispose();
@@ -126,6 +141,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        if (_settings != null) Log.Write($"exit code={e.ApplicationExitCode}"); // skips the --export-icon helper
         _tray?.Dispose();
         _mutex?.Dispose();
         base.OnExit(e);

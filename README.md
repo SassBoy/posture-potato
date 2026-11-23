@@ -29,6 +29,8 @@ A small Windows tray app. Every so often a pixel-art potato pops out of the corn
 
 - **Stays quiet on its own:** when the PC is locked or asleep (the countdown restarts when you're back), and after 5+ minutes away (coming back counts as a fresh start).
 - Settings are saved in `%APPDATA%\PosturePotato\settings.json`. Start with Windows uses the per-user Run key, and turning it off in Task Manager is respected.
+- **Start menu:** each launch makes sure there's a "Posture Potato" shortcut in your Start menu, so Windows search finds it, and repoints the shortcut if the exe has moved. Opening it while the app is already running brings up Settings.
+- **Startup log:** `%APPDATA%\PosturePotato\startup.log` records each start (arguments, working folder, time since boot), hand-offs to a copy that's already running, crashes, Windows session endings and exits. If the app ever goes missing after a reboot, check this file first. It trims itself to about 64 KB.
 
 ## Build and run
 You need Windows 10 or 11 and the .NET 8 SDK.
