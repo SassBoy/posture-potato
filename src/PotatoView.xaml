@@ -1,0 +1,8 @@
+<UserControl x:Class="PosturePotato.PotatoView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             IsHitTestVisible="False" UseLayoutRounding="True">
+    <!-- The control's bottom edge is the soil line; the last two art rows hang below it. -->
+    <Image x:Name="Img" Stretch="Fill" VerticalAlignment="Top" HorizontalAlignment="Left"
+           RenderOptions.BitmapScalingMode="NearestNeighbor" SnapsToDevicePixels="True"/>
+</UserControl>

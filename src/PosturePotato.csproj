@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon Condition="Exists('potato.ico')">potato.ico</ApplicationIcon>
+    <AssemblyTitle>Posture Potato</AssemblyTitle>
+    <Product>Posture Potato</Product>
+    <Version>1.0.0</Version>
+    <!-- Keep the idle footprint small -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <!-- CS4014: fire-and-forget animations are intentional. WFAC010: WPF needs the DPI manifest. -->
+    <NoWarn>$(NoWarn);CS4014;WFAC010</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WPF and WinForms both define Application, Color, Button... keep WPF as the default. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+</Project>

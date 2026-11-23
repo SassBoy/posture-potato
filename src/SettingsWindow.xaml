@@ -1,0 +1,80 @@
+<Window x:Class="PosturePotato.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:PosturePotato"
+        Title="Posture Potato" Width="420" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen" Background="{StaticResource SurfaceBrush}"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="84" GlassFrameThickness="0" ResizeBorderThickness="0"
+                      CornerRadius="0" UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <Style x:Key="Row" TargetType="Grid">
+            <Setter Property="Margin" Value="0,4"/>
+        </Style>
+        <Style x:Key="Value" TargetType="TextBlock" BasedOn="{StaticResource Body}">
+            <Setter Property="Width" Value="64"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+
+    <StackPanel Margin="24,14,22,20">
+        <!-- Header (drag area) -->
+        <Grid Height="72">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Border VerticalAlignment="Bottom" Height="70" ClipToBounds="True" Margin="-6,0,0,4">
+                <local:PotatoView x:Name="Potato" ArtScale="2" VerticalAlignment="Bottom"/>
+            </Border>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
+                <TextBlock Style="{StaticResource Title}" Text="Posture Potato"/>
+                <TextBlock x:Name="StatusText" Style="{StaticResource Muted}" Margin="0,1,0,0"/>
+            </StackPanel>
+            <Button Grid.Column="2" VerticalAlignment="Top" Margin="0,2,0,0" Style="{StaticResource IconButton}"
+                    Content="✕" FontSize="10" ToolTip="Close" Click="Close_Click"
+                    WindowChrome.IsHitTestVisibleInChrome="True"/>
+        </Grid>
+
+        <TextBlock Style="{StaticResource GroupLabel}" Text="Reminders" Margin="0,14,0,6"/>
+
+        <Grid Style="{StaticResource Row}">
+            <TextBlock Style="{StaticResource Body}" Text="Check every"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Style="{StaticResource IconButton}" Content="−" Click="IntervalDown_Click" ToolTip="5 minutes less"/>
+                <TextBlock x:Name="IntervalText" Style="{StaticResource Value}"/>
+                <Button Style="{StaticResource IconButton}" Content="+" Click="IntervalUp_Click" ToolTip="5 minutes more"/>
+            </StackPanel>
+        </Grid>
+
+        <Grid Style="{StaticResource Row}">
+            <TextBlock Style="{StaticResource Body}" Text="Hide unanswered checks after"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Style="{StaticResource IconButton}" Content="−" Click="HideDown_Click" ToolTip="15 seconds less"/>
+                <TextBlock x:Name="HideText" Style="{StaticResource Value}"/>
+                <Button Style="{StaticResource IconButton}" Content="+" Click="HideUp_Click" ToolTip="15 seconds more"/>
+            </StackPanel>
+        </Grid>
+
+        <TextBlock Style="{StaticResource GroupLabel}" Text="Stay quiet"/>
+        <CheckBox x:Name="FullscreenBox" Style="{StaticResource ToggleSwitch}"
+                  Content="During full-screen apps and games" Click="Toggle_Click"/>
+        <CheckBox x:Name="AwayBox" Style="{StaticResource ToggleSwitch}"
+                  Content="When I've been away for 5+ minutes" Click="Toggle_Click"/>
+
+        <TextBlock Style="{StaticResource GroupLabel}" Text="System"/>
+        <CheckBox x:Name="AutostartBox" Style="{StaticResource ToggleSwitch}"
+                  Content="Start with Windows" Click="Autostart_Click"/>
+
+        <Grid Margin="0,22,0,0">
+            <TextBlock Style="{StaticResource Muted}" Margin="0,0,16,0" MaxWidth="240" HorizontalAlignment="Left"
+                       Text="Closing this keeps me running in the hidden icons on your taskbar."/>
+            <Button HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource PrimaryButton}"
+                    Content="Check now" Click="CheckNow_Click"/>
+        </Grid>
+    </StackPanel>
+</Window>
