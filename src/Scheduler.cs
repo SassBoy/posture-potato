@@ -1,4 +1,4 @@
-using System.Windows.Threading;
+using Avalonia.Threading;
 using Microsoft.Win32;
 
 namespace PosturePotato;
@@ -10,10 +10,12 @@ namespace PosturePotato;
 public sealed class Scheduler : IDisposable
 {
     private static readonly TimeSpan AwayAfter = TimeSpan.FromMinutes(5);
+    /// <summary>A gap this long between 15 s ticks means the PC was asleep.</summary>
+    private static readonly TimeSpan SleptAfter = TimeSpan.FromMinutes(2);
 
     private readonly Settings _settings;
     private readonly DispatcherTimer _timer = new(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(15) };
-    private DateTime _lastResetUtc;
+    private DateTime _lastResetUtc, _lastTickUtc;
     private bool _locked, _away;
 
     public DateTime NextDueUtc { get; private set; }
@@ -36,16 +38,23 @@ public sealed class Scheduler : IDisposable
     public void Start()
     {
         Reset();
+        _lastTickUtc = DateTime.UtcNow;
         _timer.Start();
-        SystemEvents.SessionSwitch += OnSessionSwitch;
-        SystemEvents.PowerModeChanged += OnPowerModeChanged;
+        if (OperatingSystem.IsWindows())
+        {
+            SystemEvents.SessionSwitch += OnSessionSwitch;
+            SystemEvents.PowerModeChanged += OnPowerModeChanged;
+        }
     }
 
     public void Dispose()
     {
         _timer.Stop();
-        SystemEvents.SessionSwitch -= OnSessionSwitch;
-        SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+        if (OperatingSystem.IsWindows())
+        {
+            SystemEvents.SessionSwitch -= OnSessionSwitch;
+            SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+        }
     }
 
     // ----- tray actions -----
@@ -112,8 +121,25 @@ public sealed class Scheduler : IDisposable
 
     private void Tick()
     {
-        if (_locked || Showing) return;
         var now = DateTime.UtcNow;
+        bool slept = now - _lastTickUtc > SleptAfter;
+        _lastTickUtc = now;
+
+        // Linux reports lock state by polling; Windows sends events (see below).
+        if (Platform.IsLocked is bool locked)
+        {
+            if (locked && !_locked) GoAway();
+            else if (!locked && _locked) ComeBack();
+        }
+        if (slept && !_locked)
+        {
+            // Woke from sleep without a lock screen: like coming back to the desk.
+            _away = false;
+            Reset();
+            return;
+        }
+
+        if (_locked || Showing) return;
 
         if (PausedUntilUtc is { } until)
         {
@@ -122,16 +148,16 @@ public sealed class Scheduler : IDisposable
             return;
         }
 
-        if (_settings.PauseWhenAway)
+        if (_settings.PauseWhenAway && Platform.IdleTime is { } idleFor)
         {
-            bool idle = Native.IdleTime >= AwayAfter;
+            bool idle = idleFor >= AwayAfter;
             if (idle && !_away) { _away = true; Changed?.Invoke(); }
             if (idle) return;
             if (_away) { _away = false; Reset(); return; } // you got up and moved: that counts
         }
 
         if (now < NextDueUtc) return;
-        if (_settings.QuietDuringFullscreen && Native.IsUserBusy) return; // retry next tick
+        if (_settings.QuietDuringFullscreen && Platform.IsUserBusy) return; // retry next tick
         Due?.Invoke();
     }
 
@@ -173,5 +199,5 @@ public sealed class Scheduler : IDisposable
         Reset();
     }
 
-    private void OnUi(Action a) => _timer.Dispatcher.BeginInvoke(a);
+    private static void OnUi(Action a) => Dispatcher.UIThread.Post(a);
 }

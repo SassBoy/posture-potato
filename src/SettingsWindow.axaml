@@ -1,0 +1,77 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:PosturePotato"
+        x:Class="PosturePotato.SettingsWindow"
+        Title="Posture Potato" Width="420" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterScreen" Background="{StaticResource SurfaceBrush}">
+
+    <Window.Resources>
+        <ControlTheme x:Key="Value" TargetType="TextBlock" BasedOn="{StaticResource Body}">
+            <Setter Property="Width" Value="64"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+        </ControlTheme>
+    </Window.Resources>
+
+    <!-- Frame: invisible on Windows (DWM draws corners and the hairline); drawn by us on Linux. -->
+    <Border Name="Frame" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource HairlineBrush}">
+        <StackPanel Margin="24,14,22,20">
+            <!-- Header (drag to move) -->
+            <Grid Name="Header" Height="72" ColumnDefinitions="Auto,*,Auto" Background="Transparent">
+                <Border VerticalAlignment="Bottom" Height="70" ClipToBounds="True" Margin="-6,0,0,4">
+                    <local:PotatoView Name="Potato" ArtScale="2" VerticalAlignment="Bottom"/>
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
+                    <TextBlock Theme="{StaticResource Title}" Text="Posture Potato"/>
+                    <TextBlock Name="StatusText" Theme="{StaticResource Muted}" Margin="0,1,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="2" VerticalAlignment="Top" Margin="0,2,0,0" Theme="{StaticResource IconButton}"
+                        Content="✕" FontSize="10" ToolTip.Tip="Close" AutomationProperties.Name="Close"
+                        Click="Close_Click"/>
+            </Grid>
+
+            <TextBlock Theme="{StaticResource GroupLabel}" Text="Reminders" Margin="0,14,0,6"/>
+
+            <Grid Margin="0,4">
+                <TextBlock Theme="{StaticResource Body}" Text="Check every"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Theme="{StaticResource IconButton}" Content="−" Click="IntervalDown_Click"
+                            ToolTip.Tip="5 minutes less" AutomationProperties.Name="Check less often"/>
+                    <TextBlock Name="IntervalText" Theme="{StaticResource Value}"/>
+                    <Button Theme="{StaticResource IconButton}" Content="+" Click="IntervalUp_Click"
+                            ToolTip.Tip="5 minutes more" AutomationProperties.Name="Check more often"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,4">
+                <TextBlock Theme="{StaticResource Body}" Text="Hide unanswered checks after"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Theme="{StaticResource IconButton}" Content="−" Click="HideDown_Click"
+                            ToolTip.Tip="15 seconds less" AutomationProperties.Name="Hide sooner"/>
+                    <TextBlock Name="HideText" Theme="{StaticResource Value}"/>
+                    <Button Theme="{StaticResource IconButton}" Content="+" Click="HideUp_Click"
+                            ToolTip.Tip="15 seconds more" AutomationProperties.Name="Hide later"/>
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Theme="{StaticResource GroupLabel}" Text="Stay quiet"/>
+            <CheckBox Name="FullscreenBox" Theme="{StaticResource ToggleSwitch}"
+                      Content="During full-screen apps and games" Click="Toggle_Click"/>
+            <CheckBox Name="AwayBox" Theme="{StaticResource ToggleSwitch}"
+                      Content="When I've been away for 5+ minutes" Click="Toggle_Click"/>
+
+            <TextBlock Theme="{StaticResource GroupLabel}" Text="System"/>
+            <CheckBox Name="AutostartBox" Theme="{StaticResource ToggleSwitch}"
+                      Content="Start with Windows" Click="Autostart_Click"/>
+
+            <Grid Margin="0,22,0,0" ColumnDefinitions="*,Auto">
+                <TextBlock Name="FooterText" Theme="{StaticResource Muted}" Margin="0,0,16,0"
+                           Text="Closing this keeps me running in the hidden icons on your taskbar."/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="4">
+                    <Button Name="QuitButton" Theme="{StaticResource QuietButton}" Content="Quit" IsVisible="False"
+                            Click="Quit_Click"/>
+                    <Button Theme="{StaticResource PrimaryButton}" Content="Check now" Click="CheckNow_Click"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Border>
+</Window>

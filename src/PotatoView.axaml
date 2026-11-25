@@ -1,0 +1,8 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PosturePotato.PotatoView"
+             IsHitTestVisible="False">
+    <!-- The control's bottom edge is the soil line; the last two art rows hang below it. -->
+    <Image Name="Img" Stretch="Fill" VerticalAlignment="Top" HorizontalAlignment="Left"
+           RenderOptions.BitmapInterpolationMode="None"/>
+</UserControl>

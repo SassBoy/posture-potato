@@ -1,0 +1,38 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:PosturePotato"
+        x:Class="PosturePotato.ReminderWindow"
+        Title="Posture check" Width="460" SizeToContent="Height" CanResize="False"
+        SystemDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
+        Topmost="True" ShowInTaskbar="False" ShowActivated="False" WindowStartupLocation="Manual">
+    <Grid Name="Root" Opacity="0">
+
+        <!-- The card. Its bottom edge is the soil the potato pops out of. -->
+        <Border Name="Card" Margin="58,48,10,12" CornerRadius="12"
+                Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1"
+                BoxShadow="0 2 18 0 #47000000">
+            <Grid>
+                <StackPanel Margin="70,13,16,16">
+                    <TextBlock Name="TitleText" Theme="{StaticResource Title}" Text="Posture check"/>
+                    <TextBlock Name="TipText" Theme="{StaticResource Muted}" Margin="0,2,0,11"/>
+                    <StackPanel Name="Actions" Orientation="Horizontal">
+                        <Button Theme="{StaticResource PrimaryButton}" Content="I'm sitting up" Click="Done_Click"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Time left before the check hides itself. Hover to hold it. -->
+                <Border Name="CountdownTrack" VerticalAlignment="Bottom" Height="2" Margin="70,0,16,7" CornerRadius="1"
+                        Background="{StaticResource RaisedBrush}">
+                    <Border Name="CountdownBar" Background="{StaticResource AccentBrush}" Opacity="0.7" CornerRadius="1"
+                            RenderTransformOrigin="0%,50%"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- The potato, clipped at the card's bottom edge so it rises out of it -->
+        <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="140" Height="160"
+                Margin="0,0,0,12" ClipToBounds="True" IsHitTestVisible="False">
+            <local:PotatoView Name="Potato" ArtScale="3" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+        </Border>
+    </Grid>
+</Window>

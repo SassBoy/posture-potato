@@ -2,26 +2,30 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
-    <UseWindowsForms>true</UseWindowsForms>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon Condition="Exists('potato.ico')">potato.ico</ApplicationIcon>
     <AssemblyTitle>Posture Potato</AssemblyTitle>
     <Product>Posture Potato</Product>
-    <Version>1.0.0</Version>
+    <Version>2.0.0</Version>
     <!-- Keep the idle footprint small -->
     <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
-    <!-- CS4014: fire-and-forget animations are intentional. WFAC010: WPF needs the DPI manifest. -->
-    <NoWarn>$(NoWarn);CS4014;WFAC010</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Native Skia/HarfBuzz libraries go inside the single-file exe -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <!-- CS4014: fire-and-forget animations are intentional. CA1416: platform calls are guarded at runtime. -->
+    <NoWarn>$(NoWarn);CS4014;CA1416</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- WPF and WinForms both define Application, Color, Button... keep WPF as the default. -->
-    <Using Remove="System.Windows.Forms" />
-    <Using Remove="System.Drawing" />
+    <PackageReference Include="Avalonia" Version="11.3.23" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.23" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.23" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.23" />
+    <PackageReference Include="Microsoft.Win32.SystemEvents" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

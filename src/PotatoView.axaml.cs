@@ -1,8 +1,8 @@
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Threading;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+using Avalonia.Threading;
 
 namespace PosturePotato;
 
@@ -12,21 +12,27 @@ namespace PosturePotato;
 /// </summary>
 public partial class PotatoView : UserControl
 {
-    public static readonly DependencyProperty ArtScaleProperty = DependencyProperty.Register(
-        nameof(ArtScale), typeof(int), typeof(PotatoView),
-        new PropertyMetadata(3, (d, _) => ((PotatoView)d).UpdateSize()));
+    public static readonly StyledProperty<int> ArtScaleProperty =
+        AvaloniaProperty.Register<PotatoView, int>(nameof(ArtScale), 3);
 
     /// <summary>Screen pixels per art pixel at 100% scaling (rounded per monitor DPI).</summary>
     public int ArtScale
     {
-        get => (int)GetValue(ArtScaleProperty);
+        get => GetValue(ArtScaleProperty);
         set => SetValue(ArtScaleProperty, value);
     }
 
-    private readonly WriteableBitmap _bmp = new(PotatoArt.W, PotatoArt.H, 96, 96, PixelFormats.Bgra32, null);
+    static PotatoView()
+    {
+        ArtScaleProperty.Changed.AddClassHandler<PotatoView>((v, _) => v.UpdateSize());
+    }
+
+    private readonly WriteableBitmap _bmp = new(new PixelSize(PotatoArt.W, PotatoArt.H), new Vector(96, 96),
+        PixelFormat.Bgra8888, AlphaFormat.Unpremul);
     private readonly DispatcherTimer _clock = new(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(1000.0 / 12) };
     private readonly List<(long due, TaskCompletionSource tcs)> _waiters = new();
     private readonly Random _rng = new();
+    private TopLevel? _top;
 
     private PotatoPose _pose = new() { Eyes = EyeState.Open, Mouth = MouthState.Meh };
     private long _t;
@@ -39,26 +45,39 @@ public partial class PotatoView : UserControl
         InitializeComponent();
         Img.Source = _bmp;
         _clock.Tick += (_, _) => Tick();
-        Loaded += (_, _) => { UpdateSize(); Render(); _clock.Start(); };
-        Unloaded += (_, _) => { _clock.Stop(); ReleaseWaiters(); };
         UpdateSize();
         Render();
     }
 
-    private static bool ReducedMotion => !SystemParameters.ClientAreaAnimation;
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _top = TopLevel.GetTopLevel(this);
+        if (_top != null) _top.ScalingChanged += OnScalingChanged;
+        UpdateSize();
+        Render();
+        _clock.Start();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        if (_top != null) _top.ScalingChanged -= OnScalingChanged;
+        _top = null;
+        _clock.Stop();
+        ReleaseWaiters();
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    private void OnScalingChanged(object? sender, EventArgs e) => UpdateSize();
+
+    private static bool ReducedMotion => Platform.ReducedMotion;
 
     // ---------- sizing: whole device pixels per art pixel ----------
-
-    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
-    {
-        base.OnDpiChanged(oldDpi, newDpi);
-        UpdateSize();
-    }
 
     private void UpdateSize()
     {
         if (Img == null) return;
-        double dpi = VisualTreeHelper.GetDpi(this).DpiScaleX;
+        double dpi = _top?.RenderScaling ?? 1;
         int phys = Math.Max(1, (int)Math.Round(ArtScale * dpi, MidpointRounding.AwayFromZero));
         double px = phys / dpi;
         Img.Width = PotatoArt.W * px;
@@ -105,12 +124,21 @@ public partial class PotatoView : UserControl
         Render();
     }
 
-    private void Render()
+    private unsafe void Render()
     {
         var pose = _pose;
         bool breathing = _idle && _squashFx == 0 && pose.Lift == 0;
         pose.Squash = _squashFx + (breathing && _t / 10 % 2 == 1 ? -1 : 0);
-        _bmp.WritePixels(new Int32Rect(0, 0, PotatoArt.W, PotatoArt.H), PotatoArt.Render(pose), PotatoArt.W * 4, 0);
+        var px = PotatoArt.Render(pose); // 0xAARRGGBB little-endian = B, G, R, A
+        using (var fb = _bmp.Lock())
+        {
+            fixed (uint* src = px)
+            {
+                for (int y = 0; y < PotatoArt.H; y++)
+                    Buffer.MemoryCopy(src + y * PotatoArt.W, (byte*)fb.Address + y * fb.RowBytes, fb.RowBytes, PotatoArt.W * 4);
+            }
+        }
+        Img?.InvalidateVisual();
     }
 
     private Task Frames(int n)
