@@ -10,6 +10,7 @@ public sealed class Settings
     public int AutoHideSeconds { get; set; } = 60;
     public bool QuietDuringFullscreen { get; set; } = true;
     public bool PauseWhenAway { get; set; } = true;
+    public bool StartWithWindows { get; set; } = true;
 
     public static readonly string Folder =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PosturePotato");
@@ -26,13 +27,23 @@ public sealed class Settings
         return s;
     }
 
-    public void Save()
+    /// <summary>Write settings.json atomically. Returns false (and logs) instead of throwing.</summary>
+    public bool Save()
     {
         Clamp();
-        Directory.CreateDirectory(Folder);
-        var tmp = FilePath + ".tmp";
-        File.WriteAllText(tmp, JsonSerializer.Serialize(this, Json));
-        File.Move(tmp, FilePath, overwrite: true);
+        try
+        {
+            Directory.CreateDirectory(Folder);
+            var tmp = FilePath + ".tmp";
+            File.WriteAllText(tmp, JsonSerializer.Serialize(this, Json));
+            File.Move(tmp, FilePath, overwrite: true);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Write($"settings save failed: {ex.GetType().Name}: {ex.Message}");
+            return false;
+        }
     }
 
     private void Clamp()
@@ -81,10 +92,31 @@ public static class Autostart
         }
     }
 
-    /// <summary>Keep the Run entry pointing at wherever the exe lives now.</summary>
-    public static void RefreshPath()
+    /// <summary>
+    /// Run on every launch: make the Run entry match the saved choice. A missing or stale
+    /// entry is (re)written, so startup heals itself; a Task Manager "Disable" is left alone.
+    /// </summary>
+    public static void Sync(bool wanted)
     {
-        using var run = Registry.CurrentUser.OpenSubKey(RunKey, writable: true);
-        if (run?.GetValue(Name) is string current && current != Command) run.SetValue(Name, Command);
+        try
+        {
+            using var run = Registry.CurrentUser.CreateSubKey(RunKey);
+            var current = run.GetValue(Name) as string;
+            if (wanted && current != Command)
+            {
+                run.SetValue(Name, Command);
+                Log.Write(current == null ? $"startup entry added: {Command}" : $"startup entry repointed: {Command}");
+            }
+            else if (!wanted && current != null)
+            {
+                run.DeleteValue(Name, throwOnMissingValue: false);
+                Log.Write("startup entry removed (Start with Windows is off)");
+            }
+            if (wanted && !IsEnabled) Log.Write("startup entry is disabled in Task Manager; leaving it");
+        }
+        catch (Exception ex)
+        {
+            Log.Write($"startup entry sync failed: {ex.GetType().Name}: {ex.Message}");
+        }
     }
 }

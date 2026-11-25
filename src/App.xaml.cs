@@ -61,15 +61,10 @@ public partial class App : Application
             { IsBackground = true }.Start();
 
         _settings = Settings.Load(out bool firstRun);
-        if (firstRun)
-        {
-            Autostart.Set(true);
-            _settings.Save();
-        }
-        else
-        {
-            Autostart.RefreshPath();
-        }
+        Log.Write(firstRun ? "first run: no settings yet, using defaults"
+                           : $"settings loaded: every {_settings.IntervalMinutes} min, start with Windows {(_settings.StartWithWindows ? "on" : "off")}");
+        if (firstRun) _settings.Save();
+        Autostart.Sync(_settings.StartWithWindows);
         StartMenu.Ensure();
 
         Scheduler = new Scheduler(_settings);
@@ -123,10 +118,11 @@ public partial class App : Application
         _settingsWindow.Activate();
     }
 
-    public void SettingsChanged()
+    public bool SettingsChanged()
     {
-        _settings.Save();
+        bool saved = _settings.Save();
         Scheduler.IntervalChanged();
+        return saved;
     }
 
     public void Quit()

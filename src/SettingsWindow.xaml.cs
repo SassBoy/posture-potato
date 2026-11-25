@@ -56,8 +56,13 @@ public partial class SettingsWindow : Window
 
     private void Apply()
     {
-        _app.SettingsChanged(); // clamps, saves, reschedules
+        Saved(_app.SettingsChanged()); // clamps, saves, reschedules
         ShowValues();
+    }
+
+    private void Saved(bool ok)
+    {
+        if (!ok) StatusText.Text = "Couldn't save settings (see startup.log)";
     }
 
     private void IntervalDown_Click(object sender, RoutedEventArgs e) { S.IntervalMinutes -= 5; Apply(); }
@@ -74,7 +79,14 @@ public partial class SettingsWindow : Window
 
     private void Autostart_Click(object sender, RoutedEventArgs e)
     {
-        try { Autostart.Set(AutostartBox.IsChecked == true); }
+        bool on = AutostartBox.IsChecked == true;
+        try
+        {
+            Autostart.Set(on); // an explicit "on" also clears a Task Manager "Disable"
+            Log.Write($"Start with Windows turned {(on ? "on" : "off")} in Settings");
+            S.StartWithWindows = on;
+            Saved(_app.SettingsChanged());
+        }
         catch (Exception ex) { StatusText.Text = $"Couldn't change startup: {ex.Message}"; }
         AutostartBox.IsChecked = Autostart.IsEnabled;
     }

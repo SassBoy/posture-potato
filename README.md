@@ -28,7 +28,9 @@ A small Windows tray app. Every so often a pixel-art potato pops out of the corn
   ![Settings](docs/settings.png)
 
 - **Stays quiet on its own:** when the PC is locked or asleep (the countdown restarts when you're back), and after 5+ minutes away (coming back counts as a fresh start).
-- Settings are saved in `%APPDATA%\PosturePotato\settings.json`. Start with Windows uses the per-user Run key, and turning it off in Task Manager is respected.
+- **Settings** are saved to `%APPDATA%\PosturePotato\settings.json` the moment you change them, including Start with Windows. If a save fails, Settings says so and the reason goes in the startup log.
+- **Start with Windows** uses the per-user Run key. Every launch checks the key against your saved choice, and re-adds or repoints it if it's missing or stale, so startup repairs itself. Turning it off in Task Manager is respected.
+- **Don't test it from a sandboxed (MSIX) app's shell**, such as Claude Desktop's: anything launched from there writes its settings and Run key into that app's private copy of AppData and the registry, which Windows startup never sees. Launch it from Explorer, the Start menu or a normal terminal.
 - **Start menu:** each launch makes sure there's a "Posture Potato" shortcut in your Start menu, so Windows search finds it, and repoints the shortcut if the exe has moved. Opening it while the app is already running brings up Settings.
 - **Startup log:** `%APPDATA%\PosturePotato\startup.log` records each start (arguments, working folder, time since boot), hand-offs to a copy that's already running, crashes, Windows session endings and exits. If the app ever goes missing after a reboot, check this file first. It trims itself to about 64 KB.
 
